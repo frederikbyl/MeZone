@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="MeZone">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MeZone</title>
+
+  <!-- update the version number as needed -->
+  <script defer src="/__/firebase/4.9.1/firebase-app.js"></script>
+  <!-- include only the Firebase features as you need -->
+  <script defer src="/__/firebase/4.9.1/firebase-auth.js"></script>
+  <script defer src="/__/firebase/4.9.1/firebase-database.js"></script>
+  <script defer src="/__/firebase/4.9.1/firebase-messaging.js"></script>
+  <script defer src="/__/firebase/4.9.1/firebase-storage.js"></script>
+  <!-- initialize the SDK after all desired features are loaded -->
+  <script defer src="/__/firebase/init.js"></script>
+
+  <script defer src="scripts/main.js"></script>
+</head>
+<body>
+<div >
+
+  <!-- Header section containing logo -->
+  <header >
+    <div>
+
+      <div id="user-container">
+        <div hidden id="user-location"></div>
+        <div hidden id="user-name"></div>
+        <button hidden id="sign-out" >
+          Sign-out
+        </button>
+        <button hidden id="sign-in" >
+          Sign-in with Google
+        </button>
+        <div >
+          <input hidden type="text" id="message" value="">
+        </div>
+        <button hidden id="log-event" >
+          Log Event
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="map" style="clear:both; height:200px;"></div>
+  </main>
+
+  <script>
+    // Note: This example requires that you consent to location sharing when
+    // prompted by your browser. If you see the error "The Geolocation service
+    // failed.", it means you probably did not give permission for the browser to
+    // locate you.
+    var map, infoWindow;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: -34.397, lng: 150.644},
+        zoom: 6
+      });
+      infoWindow = new google.maps.InfoWindow;
+
+      // Try HTML5 geolocation.
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          var pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+
+          infoWindow.setPosition(pos);
+          infoWindow.setContent('Location found.');
+          infoWindow.open(map);
+          map.setCenter(pos);
+        }, function() {
+          handleLocationError(true, infoWindow, map.getCenter());
+        });
+      } else {
+        // Browser doesn't support Geolocation
+        handleLocationError(false, infoWindow, map.getCenter());
+      }
+    }
+
+    function handleLocationError(browserHasGeolocation, infoWindow, pos) {
+      infoWindow.setPosition(pos);
+      infoWindow.setContent(browserHasGeolocation ?
+                            'Error: The Geolocation service failed.' :
+                            'Error: Your browser doesn\'t support geolocation.');
+      infoWindow.open(map);
+    }
+  </script>
+  <script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyANupvBm7KQZE_VgSO0G4CJeQAl_FpyeXg&callback=initMap">
+  </script>
+
+
+</div>
+
+
+
+</body>
+</html>
