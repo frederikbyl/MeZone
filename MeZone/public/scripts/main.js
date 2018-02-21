@@ -20,7 +20,7 @@ function MeZone() {
   this.checkSetup();
 
   // Shortcuts to DOM Elements.
-  this.map = document.getElementById('map');
+  this.mezoneMap = document.getElementById('map');
   this.submitButton = document.getElementById('submit');
   this.submitImageButton = document.getElementById('submitImage');
   this.userLocation = document.getElementById('user-location');
@@ -33,14 +33,17 @@ function MeZone() {
   this.signOutButton.addEventListener('click', this.signOut.bind(this));
   this.signInButton.addEventListener('click', this.signIn.bind(this));
   this.logEventButton.addEventListener('click', this.createEvent.bind(this));
-
+  this.events = [];
   // Toggle for the button.
   var buttonTogglingHandler = this.toggleButton.bind(this);
 
-  this.map.removeAttribute('hidden');
+  this.mezoneMap.removeAttribute('hidden');
   this.initFirebase();
 
   this.meZoneEvents = this.database.ref('meZoneEvents');
+  this.loadEvents();
+
+  //this.toggleHeatMap();
 
 }
 
@@ -74,7 +77,9 @@ MeZone.prototype.createEvent = function(e) {
            // Add a new message entry to the Firebase Database.
          mezone.meZoneEvents.push({
            name: currentUser.displayName,
-           position: pos
+           position: pos,
+           eventType: 'public',
+           eventTag: 'litter'
          }).then(function() {
            // Clear message text field and SEND button state.
           window.alert("SAVED");
@@ -183,6 +188,33 @@ MeZone.prototype.checkSetup = function() {
         'sure you are running the codelab using `firebase serve`');
   }
 };
+
+MeZone.prototype.toggleHeatMap = function() {
+  var heatmap = new google.maps.visualization.HeatmapLayer({
+          data: this.events,
+          map: map
+        });
+}
+
+MeZone.prototype.loadEvents = function() {
+  // Make sure we remove all previous listeners.
+  this.meZoneEvents.off();
+
+  // Loads the last 12 messages and listen for new ones.
+  var setEvents = function(data) {
+    data.forEach(function(childSnapshot) {
+      var childKey = childSnapshot.key;
+      var childData = childSnapshot.val();
+      console.log(childData.position);
+      mezone.events.push(new google.maps.LatLng(childData.position.lat, childData.position.lng));
+    });
+    this.toggleHeatMap();
+  //  this.events.push(new google.maps.LatLng(val.position.lat, val.position.lng));
+  }.bind(this);
+  //this.meZoneEvents.limitToLast(20).on('child_added', setEvents);
+  //this.meZoneEvents.limitToLast(20).on('child_changed', setEvents);
+  this.meZoneEvents.once('value').then(setEvents);
+}
 
 window.onload = function() {
   window.mezone = new MeZone();

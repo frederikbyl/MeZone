@@ -45,7 +45,7 @@
   </header>
 
   <main>
-    <div id="map" style="clear:both; height:200px;"></div>
+    <div id="map" style="clear:both; height:400px;"></div>
   </main>
 
   <script>
@@ -73,6 +73,9 @@
           infoWindow.setContent('Location found.');
           infoWindow.open(map);
           map.setCenter(pos);
+
+
+
         }, function() {
           handleLocationError(true, infoWindow, map.getCenter());
         });
@@ -91,7 +94,7 @@
     }
   </script>
   <script async defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyANupvBm7KQZE_VgSO0G4CJeQAl_FpyeXg&callback=initMap">
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyANupvBm7KQZE_VgSO0G4CJeQAl_FpyeXg&callback=initMap&libraries=visualization">
   </script>
 
 
