@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1097756009405",
+    "firebase_url": "https://mezone-a1abe.firebaseio.com",
+    "project_id": "mezone-a1abe",
+    "storage_bucket": "mezone-a1abe.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1097756009405:android:1e4526b308a1071c",
+        "android_client_info": {
+          "package_name": "mezone.com.mezoneandroid"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1097756009405-o83pdmn016s84kvu4jim8c4e888rfim8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "mezone.com.mezoneandroid",
+            "certificate_hash": "175a01726621763c873ce5456e347371ae3e6ad8"
+          }
+        },
+        {
+          "client_id": "1097756009405-l6gk08frlla26367vefa0attete04g5l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpfo3mmKOX6EWaqg9i09p2LI_He76rcOw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1097756009405-l6gk08frlla26367vefa0attete04g5l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

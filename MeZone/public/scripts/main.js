@@ -76,7 +76,8 @@ MeZone.prototype.createEvent = function(e) {
          var currentUser = mezone.auth.currentUser;
            // Add a new message entry to the Firebase Database.
          mezone.meZoneEvents.push({
-           name: currentUser.displayName,
+           uid: currentUser.uid,
+           email: currentUser.email,
            position: pos,
            eventType: 'public',
            eventTag: 'litter'
@@ -205,15 +206,26 @@ MeZone.prototype.loadEvents = function() {
     data.forEach(function(childSnapshot) {
       var childKey = childSnapshot.key;
       var childData = childSnapshot.val();
+      console.log(childData);
       console.log(childData.position);
       mezone.events.push(new google.maps.LatLng(childData.position.lat, childData.position.lng));
+
+      var marker = new google.maps.Marker({
+        position: new google.maps.LatLng(childData.position.lat, childData.position.lng),
+        map: map,
+        title:"teST!"
+      });
     });
     this.toggleHeatMap();
   //  this.events.push(new google.maps.LatLng(val.position.lat, val.position.lng));
   }.bind(this);
   //this.meZoneEvents.limitToLast(20).on('child_added', setEvents);
   //this.meZoneEvents.limitToLast(20).on('child_changed', setEvents);
-  this.meZoneEvents.once('value').then(setEvents);
+  //this.meZoneEvents.once('value').then(setEvents);
+  this.meZoneEvents.orderByChild("uid").equalTo(this.auth.currentUser.uid).on("value", setEvents);
+//  this.meZoneEvents.orderByChild("uid").on("value", setEvents);
+  //this.meZoneEvents.on("value", setEvents);
+  //this.database.ref('meZoneEvents').orderByChild("uid").equalTo(this.auth.currentUser.uid).on("value", setEvents);
 }
 
 window.onload = function() {
