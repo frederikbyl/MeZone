@@ -1,4 +1,12 @@
 <resources>
     <string name="app_name">MeZoneAndroid</string>
-    <string name="title_activity_me_zone_maps">MeZone</string>
+    <string name="title_activity_main_me_zone">MainMeZoneActivity</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_login">Login</string>
+    <string name="dialog_title_new_event">Log event</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
 </resources>
