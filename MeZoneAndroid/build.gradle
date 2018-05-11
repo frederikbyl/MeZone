@@ -37,6 +37,7 @@ configurations.all {
         force 'com.google.firebase:firebase-common:12.0.1'
         force 'com.google.firebase:firebase-config:12.0.1'
         force 'com.google.firebase:firebase-messaging:12.0.1'
+        force 'com.google.firebase:firebase-functions:12.0.1'
     }
 }
 

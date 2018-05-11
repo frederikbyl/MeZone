@@ -37,6 +37,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -45,11 +46,20 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.functions.FirebaseFunctions;
+import com.google.firebase.functions.FirebaseFunctionsException;
+import com.google.firebase.functions.HttpsCallableResult;
+import com.google.gson.Gson;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mezone.com.mezoneandroid.trello.TrelloCard;
 import mezone.com.mezoneandroid.trello.TrelloTask;
@@ -86,6 +96,10 @@ public class MainMeZoneActivity extends AppCompatActivity
     private static final int SPEECH_REQUEST_CODE = 0;
 
 
+    // [START define_functions_instance]
+    private FirebaseFunctions mFunctions;
+    // [END define_functions_instance]
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,6 +127,10 @@ public class MainMeZoneActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mAuth = FirebaseAuth.getInstance();
+
+        // [START initialize_functions_instance]
+        mFunctions = FirebaseFunctions.getInstance();
+        // [END initialize_functions_instance]
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
@@ -333,12 +351,37 @@ public class MainMeZoneActivity extends AppCompatActivity
             builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
 
-                    //create trello card
-                    TrelloCard card = new TrelloCard();
-                    card.setName(spokenText);
-                    card.setDesc("long : " + mLocation.getLongitude() +"; lat:"+mLocation.getLatitude() );
-                    card.setLocation(mLocation);
-                    new TrelloTask().execute(card);
+                    // [START call_add_message]
+                    createEvent(spokenText)
+                            .addOnCompleteListener(new OnCompleteListener<String>() {
+                                @Override
+                                public void onComplete(@NonNull Task<String> task) {
+                                    if (!task.isSuccessful()) {
+                                        Exception e = task.getException();
+                                        if (e instanceof FirebaseFunctionsException) {
+                                            FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
+                                            FirebaseFunctionsException.Code code = ffe.getCode();
+                                            Object details = ffe.getDetails();
+                                        }
+
+                                        // [START_EXCLUDE]
+                                        //Log.w(TAG, "addMessage:onFailure", e);
+                                        //showSnackbar("An error occurred.");
+                                        Log.w("FUNCTION CALL", "exception", e);
+                                        //TODO FREDERIK: ADD EXCEPTION SCREEN
+                                        return;
+                                        // [END_EXCLUDE]
+                                    }
+
+                                    // [START_EXCLUDE]
+                                    //String result = task.getResult();
+                                    //mMessageOutputField.setText(result);
+                                    //TODO FREDERIK: ADD OK SCREEN
+                                    Log.d("FUNCTION CALL", "success");
+                                    // [END_EXCLUDE]
+                                }
+                            });
+                    // [END call_add_message]
 
 
 
@@ -479,6 +522,45 @@ public class MainMeZoneActivity extends AppCompatActivity
 
 
     }
+
+    // [START function_add_message]
+    private Task<String> createEvent(String text) {
+        // Create the arguments to the callable function, which is just one string
+        //create trello card
+        TrelloCard card = new TrelloCard();
+        card.setName(text);
+        card.setDesc("long : " + mLocation.getLongitude() +"; lat:"+mLocation.getLatitude() );
+        card.setLocation(mLocation);
+        // new TrelloTask().execute(card);
+
+
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(card);
+        JSONObject jsonObj = null;
+        try {
+             jsonObj = new JSONObject(jsonString);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+
+        return mFunctions
+                .getHttpsCallable("createEvent")
+                .call(jsonObj)
+                .continueWith(new Continuation<HttpsCallableResult, String>() {
+                    @Override
+                    public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
+                        // This continuation runs on either success or failure, but if the task
+                        // has failed then getResult() will throw an Exception which will be
+                        // propagated down.
+                        String result = (String) task.getResult().getData();
+                        Log.d("return from function", result);
+                        return result;
+                    }
+                });
+    }
+    // [END function_add_message]
 
 
 }

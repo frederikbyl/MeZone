@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">MeZoneAndroid</string>
-    <string name="title_activity_main_me_zone">MainMeZoneActivity</string>
+    <string name="title_activity_main_me_zone">Welcome to MeZone</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
