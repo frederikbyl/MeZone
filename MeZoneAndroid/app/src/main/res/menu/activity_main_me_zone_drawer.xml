@@ -11,7 +11,8 @@
         <item
             android:id="@+id/nav_overview_events"
             android:icon="@drawable/ic_list_black_24dp"
-            android:title="Events logged" />
+            android:title="Events logged"
+            android:onClick="overviewEvents"/>
         <item
             android:id="@+id/nav_manage"
             android:icon="@drawable/ic_menu_manage"
@@ -20,6 +21,11 @@
 
     <item android:title="Profile">
         <menu>
+            <item
+                android:id="@+id/action_login"
+                android:onClick="loginGoogle"
+                android:orderInCategory="100"
+                android:title="@string/action_login" />
             <item
                 android:id="@+id/nav_sign_out"
                 android:icon="@android:drawable/ic_lock_power_off"

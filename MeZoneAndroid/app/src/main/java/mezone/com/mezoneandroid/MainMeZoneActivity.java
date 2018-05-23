@@ -37,7 +37,6 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
-import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -47,22 +46,16 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.functions.FirebaseFunctions;
-import com.google.firebase.functions.FirebaseFunctionsException;
-import com.google.firebase.functions.HttpsCallableResult;
-import com.google.gson.Gson;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
-import mezone.com.mezoneandroid.trello.TrelloCard;
-import mezone.com.mezoneandroid.trello.TrelloTask;
+import mezone.com.mezoneandroid.event.Event;
+import mezone.com.mezoneandroid.event.EventTask;
+import mezone.com.mezoneandroid.event.LocationUtil;
 
 public class MainMeZoneActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback {
@@ -84,11 +77,6 @@ public class MainMeZoneActivity extends AppCompatActivity
 
     //END-FIREBASE/////////////////////////////////////////////////////////////////////
 
-    //FIRESTORE //////////////////////
-
-    //private FirebaseFirestore mDb = FirebaseFirestore.getInstance();
-
-    /////////////
     HeatmapTileProvider mProvider;
     TileOverlay mOverlay;
 
@@ -309,10 +297,10 @@ public class MainMeZoneActivity extends AppCompatActivity
         //if authenticated -> log event
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                     RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-// Start the activity, the intent will be populated with the speech text
+        // Start the activity, the intent will be populated with the speech text
             startActivityForResult(intent, SPEECH_REQUEST_CODE);
         } else {
             Snackbar logonSnackbar = Snackbar.make(findViewById(R.id.fab), "Please Logon first", 1000);
@@ -338,8 +326,6 @@ public class MainMeZoneActivity extends AppCompatActivity
             // Do something with spokenText
             Log.i("MEZONE - spoken text", spokenText);
 
-
-
             // 1. Instantiate an AlertDialog.Builder with its constructor
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
@@ -350,43 +336,7 @@ public class MainMeZoneActivity extends AppCompatActivity
             // Add the buttons
             builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int id) {
-
-                    // [START call_add_message]
-                    createEvent(spokenText)
-                            .addOnCompleteListener(new OnCompleteListener<String>() {
-                                @Override
-                                public void onComplete(@NonNull Task<String> task) {
-                                    if (!task.isSuccessful()) {
-                                        Exception e = task.getException();
-                                        if (e instanceof FirebaseFunctionsException) {
-                                            FirebaseFunctionsException ffe = (FirebaseFunctionsException) e;
-                                            FirebaseFunctionsException.Code code = ffe.getCode();
-                                            Object details = ffe.getDetails();
-                                        }
-
-                                        // [START_EXCLUDE]
-                                        //Log.w(TAG, "addMessage:onFailure", e);
-                                        //showSnackbar("An error occurred.");
-                                        Log.w("FUNCTION CALL", "exception", e);
-                                        //TODO FREDERIK: ADD EXCEPTION SCREEN
-                                        return;
-                                        // [END_EXCLUDE]
-                                    }
-
-                                    // [START_EXCLUDE]
-                                    //String result = task.getResult();
-                                    //mMessageOutputField.setText(result);
-                                    //TODO FREDERIK: ADD OK SCREEN
-                                    Log.d("FUNCTION CALL", "success");
-                                    // [END_EXCLUDE]
-                                }
-                            });
-                    // [END call_add_message]
-
-
-
-
-
+                    createEvent(spokenText);
                 }
             });
             builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -397,12 +347,7 @@ public class MainMeZoneActivity extends AppCompatActivity
 
             // 3. Get the AlertDialog from create()
             AlertDialog dialog = builder.create();
-
             dialog.show();
-
-
-
-
 
         }
         if (requestCode == RC_SIGN_IN) {
@@ -481,9 +426,6 @@ public class MainMeZoneActivity extends AppCompatActivity
 
         // Get the data: latitude/longitude positions of police stations.
         readItems();
-
-
-
     }
 
     private void readItems()  {
@@ -491,7 +433,7 @@ public class MainMeZoneActivity extends AppCompatActivity
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         Log.d("FREDERIK", String.valueOf(list.size()));
-        db.collection("events")
+        db.collection("events").whereEqualTo("uid", FirebaseAuth.getInstance().getCurrentUser().getUid())
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
@@ -499,21 +441,22 @@ public class MainMeZoneActivity extends AppCompatActivity
                         if (task.isSuccessful()) {
                             for (QueryDocumentSnapshot document : task.getResult()) {
                                // Log.d(TAG, document.getId() + " => " + document.getData());
-                                double lat = (double)document.getData().get("latitude");
-                                double lng = (double)document.getData().get("longitude");
+                                Event event = document.toObject(Event.class);
+                                double lat = event.getEventLocation().getLatitude();
+                                double lng = event.getEventLocation().getLongitude();
                                 list.add(new LatLng(lat, lng));
-
-                                Log.d("FREDERIK ADD", String.valueOf(lat));
                             }
 
                             // Create a heat map tile provider, passing it the latlngs of the police stations.
-                            mProvider = new HeatmapTileProvider.Builder()
-                                    .data(list)
-                                    .build();
-                            // Add a tile overlay to the map, using the heat map tile provider.
-                            mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+                            if(list.size()>0) {
+                                mProvider = new HeatmapTileProvider.Builder()
+                                        .data(list)
+                                        .build();
+                                // Add a tile overlay to the map, using the heat map tile provider.
+                                mOverlay = mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
 
-                            Log.d("FREDERIK ADD", String.valueOf(list.size()));
+                            }
+
                         } else {
                             Log.w("MainMeZoneActivity", "Error getting documents.", task.getException());
                         }
@@ -523,44 +466,20 @@ public class MainMeZoneActivity extends AppCompatActivity
 
     }
 
-    // [START function_add_message]
-    private Task<String> createEvent(String text) {
-        // Create the arguments to the callable function, which is just one string
-        //create trello card
-        TrelloCard card = new TrelloCard();
-        card.setName(text);
-        card.setDesc("long : " + mLocation.getLongitude() +"; lat:"+mLocation.getLatitude() );
-        card.setLocation(mLocation);
-        // new TrelloTask().execute(card);
+    private void createEvent(String text) {
+        // Create the event
+        if(mLocation!= null && text!= null && text!= "") {
+            Event event = new Event();
+            event.setDate(new Date());
+            event.setDesc(text);
+            event.setUid(FirebaseAuth.getInstance().getCurrentUser().getUid());
+            event.setEventLocation(LocationUtil.toEventLocation(mLocation));
 
-
-        Gson gson = new Gson();
-        String jsonString = gson.toJson(card);
-        JSONObject jsonObj = null;
-        try {
-             jsonObj = new JSONObject(jsonString);
-        } catch (JSONException e) {
-            e.printStackTrace();
+            new EventTask().execute(event);
         }
-
-
-
-        return mFunctions
-                .getHttpsCallable("createEvent")
-                .call(jsonObj)
-                .continueWith(new Continuation<HttpsCallableResult, String>() {
-                    @Override
-                    public String then(@NonNull Task<HttpsCallableResult> task) throws Exception {
-                        // This continuation runs on either success or failure, but if the task
-                        // has failed then getResult() will throw an Exception which will be
-                        // propagated down.
-                        String result = (String) task.getResult().getData();
-                        Log.d("return from function", result);
-                        return result;
-                    }
-                });
     }
-    // [END function_add_message]
 
+    public void overviewEvents(MenuItem item) {
 
+    }
 }
